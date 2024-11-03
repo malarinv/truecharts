@@ -85,7 +85,6 @@ jobs:
       #         /repositories/*
       #         /templates/*
 
-
   build:
     permissions:
       actions: read # for detecting the Github Actions environment.
@@ -160,7 +159,7 @@ jobs:
           fi
           echo ::set-output name=category::${CATEGORY}
           echo ::set-output name=version::${VERSION}
-          PLATFORM="linux/amd64"
+          PLATFORM="linux/amd64, linux/arm, linux/arm64, linux/386"
           echo ::set-output name=platform::${PLATFORM}
           if test -f "./${CATEGORY}/${{ matrix.container }}/goss.yaml"; then
             echo ::set-output name=goss::true
@@ -169,12 +168,12 @@ jobs:
           fi
           if [ "${{github.event_name}}" == "pull_request" ]; then
             echo ::set-output name=push::false
-            echo ::set-output name=cache_from::"type=registry,ref=ghcr.io/truecharts/${{ matrix.container }}:buildcache" || echo ::set-output name=cache_from::""
+            echo ::set-output name=cache_from::"type=registry,ref=ghcr.io/malarinv/truecharts-${{ matrix.container }}:buildcache" || echo ::set-output name=cache_from::""
             echo ::set-output name=cache_to::""
           else
             echo ::set-output name=push::true
-            echo ::set-output name=cache_from::"type=registry,ref=ghcr.io/truecharts/${{ matrix.container }}:buildcache"
-            echo ::set-output name=cache_to::"type=registry,ref=ghcr.io/truecharts/${{ matrix.container }}:buildcache,mode=max"
+            echo ::set-output name=cache_from::"type=registry,ref=ghcr.io/malarinv/truecharts-${{ matrix.container }}:buildcache"
+            echo ::set-output name=cache_to::"type=registry,ref=ghcr.io/malarinv/truecharts-${{ matrix.container }}:buildcache,mode=max"
           fi
 
       - name: Get Time
@@ -194,13 +193,13 @@ jobs:
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@df80a981bc6edbc4e220a492d3cbe9f5547a6e75 # v0.17.9
 
-      - name: Login to Quay
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
-        if: github.event_name != 'pull_request'
-        with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_TCCR_USER }}
-          password: ${{ secrets.QUAY_TCCR_TOKEN }}
+      # - name: Login to Quay
+      #   uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+      #   if: github.event_name != 'pull_request'
+      #   with:
+      #     registry: quay.io
+      #     username: ${{ secrets.QUAY_TCCR_USER }}
+      #     password: ${{ secrets.QUAY_TCCR_TOKEN }}
 
       - name: Login to GHCR
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
@@ -215,8 +214,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            quay.io/tccr/${{ matrix.container }}
-            tccr.io/tccr/${{ matrix.container }}
+            ghcr.io/malarinv/truecharts-${{ matrix.container }}
 
       # Install and configure Buildx
       - name: Set up Docker Buildx
@@ -263,7 +261,7 @@ jobs:
           done
 
       # Push if not a PR, otherwise just test the build process for all requested platforms
-      - name: Build and Push
+      - name: Build and Pushplatform
         id: push
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6
         with:
@@ -279,72 +277,71 @@ jobs:
           cache-from: ${{ steps.prep.outputs.cache_from }}
           cache-to: ${{ steps.prep.outputs.cache_to }}
           tags: |
-            quay.io/tccr/${{ matrix.container }}:latest
-            quay.io/tccr/${{ matrix.container }}:v${{ steps.prep.outputs.version }}
-            quay.io/tccr/${{ matrix.container }}:build${{ steps.time.outputs.time }}
+            ghcr.io/malarinv/truecharts-${{ matrix.container }}:latest
+            ghcr.io/malarinv/truecharts-${{ matrix.container }}:v${{ steps.prep.outputs.version }}
+            ghcr.io/malarinv/truecharts-${{ matrix.container }}:build${{ steps.time.outputs.time }}
 
-      - name: Set quay to Public
-        if: github.event_name != 'pull_request'
-        run: |
-          curl -X POST -H "Content-Type: application/json" -d '{"visibility": "public"}' -H "Authorization: Bearer ${{ secrets.QUAY_TCCR_API_TOKEN }}" "https://quay.io/api/v1/repository/tccr/${{ matrix.container }}/changevisibility"
+      # - name: Set quay to Public
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     curl -X POST -H "Content-Type: application/json" -d '{"visibility": "public"}' -H "Authorization: Bearer ${{ secrets.QUAY_TCCR_API_TOKEN }}" "https://quay.io/api/v1/repository/tccr/${{ matrix.container }}/changevisibility"
 
-      - name: Sign the images
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign sign quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }} -y -a "repo=${{ github.repository }}" -a "workflow=${{ github.workflow }}" -a "ref=${{ github.sha }}"
+      # - name: Sign the images
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     cosign sign quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }} -y -a "repo=${{ github.repository }}" -a "workflow=${{ github.workflow }}" -a "ref=${{ github.sha }}"
 
-      - name: Verify the pushed tags
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign verify quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/truecharts/public/.github/workflows/containers.build.yaml@refs/heads/master
+      # - name: Verify the pushed tags
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     cosign verify quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/truecharts/public/.github/workflows/containers.build.yaml@refs/heads/master
 
-      - name: Generate SBOM
-        if: github.event_name != 'pull_request'
-        run: |
-          syft "quay.io/tccr/${{ matrix.container }}:v${{ steps.prep.outputs.version }}@${{ steps.push.outputs.digest }}" -o spdx-json=${{ matrix.container }}-sbom-spdx.json
+      # - name: Generate SBOM
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     syft "quay.io/tccr/${{ matrix.container }}:v${{ steps.prep.outputs.version }}@${{ steps.push.outputs.digest }}" -o spdx-json=${{ matrix.container }}-sbom-spdx.json
 
-      - name: Attach SBOM to image
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign attest --predicate ${{ matrix.container }}-sbom-spdx.json --type spdx "quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }}" -y
+      # - name: Attach SBOM to image
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     cosign attest --predicate ${{ matrix.container }}-sbom-spdx.json --type spdx "quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }}" -y
 
-      - name: Verify SBOM attestation
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign verify-attestation quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }}  --type https://spdx.dev/Document --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/truecharts/containers/.github/workflows/containers.build.yaml@refs/heads/master | jq '.payload |= @base64d | .payload | fromjson'
+      # - name: Verify SBOM attestation
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     cosign verify-attestation quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }}  --type https://spdx.dev/Document --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/truecharts/containers/.github/workflows/containers.build.yaml@refs/heads/master | jq '.payload |= @base64d | .payload | fromjson'
 
-      - name: Generate provenance
-        id: gen-prov
-        if: github.event_name != 'pull_request'
-        run: |
-          wget https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.5.0/slsa-generator-container-linux-amd64
-          chmod +x slsa-generator-container-linux-amd64
-          # Generate a predicate only.
-          ./slsa-generator-container-linux-amd64 generate --predicate="${{ matrix.container }}-predicate.json"
-        env:
-          UNTRUSTED_IMAGE: "quay.io/tccr/${{ matrix.container }}"
-          UNTRUSTED_DIGEST: "${{ steps.push.outputs.digest }}"
-          GITHUB_CONTEXT: "${{ toJSON(github) }}"
+      # - name: Generate provenance
+      #   id: gen-prov
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     wget https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.5.0/slsa-generator-container-linux-amd64
+      #     chmod +x slsa-generator-container-linux-amd64
+      #     # Generate a predicate only.
+      #     ./slsa-generator-container-linux-amd64 generate --predicate="${{ matrix.container }}-predicate.json"
+      #   env:
+      #     UNTRUSTED_IMAGE: "quay.io/tccr/${{ matrix.container }}"
+      #     UNTRUSTED_DIGEST: "${{ steps.push.outputs.digest }}"
+      #     GITHUB_CONTEXT: "${{ toJSON(github) }}"
 
-      - name: Sign provenance
-        id: sign-prov
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign attest --predicate="${{ matrix.container }}-predicate.json" \
-            --type slsaprovenance \
-            --yes \
-            "quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }}"
-        env:
-          COSIGN_EXPERIMENTAL: 1
+      # - name: Sign provenance
+      #   id: sign-prov
+      #   if: github.event_name != 'pull_request'
+      #   run: |
+      #     cosign attest --predicate="${{ matrix.container }}-predicate.json" \
+      #       --type slsaprovenance \
+      #       --yes \
+      #       "quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }}"
+      #   env:
+      #     COSIGN_EXPERIMENTAL: 1
 
-      - name: Verify provenance attestation
-        if: github.event_name != 'pull_request'
-        id: verf-prov
-        run: |
-          cosign verify-attestation quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }} --type slsaprovenance --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/truecharts/containers/.github/workflows/containers.build.yaml@refs/heads/master | jq '.payload |= @base64d | .payload | fromjson'
-        env:
-          COSIGN_EXPERIMENTAL: 1
-
+      # - name: Verify provenance attestation
+      #   if: github.event_name != 'pull_request'
+      #   id: verf-prov
+      #   run: |
+      #     cosign verify-attestation quay.io/tccr/${{ matrix.container }}@${{ steps.push.outputs.digest }} --type slsaprovenance --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/truecharts/containers/.github/workflows/containers.build.yaml@refs/heads/master | jq '.payload |= @base64d | .payload | fromjson'
+      #   env:
+      #     COSIGN_EXPERIMENTAL: 1
 
   # Summarize matrix https://github.community/t/status-check-for-a-matrix-jobs/127354/7
   container-build-complete:
