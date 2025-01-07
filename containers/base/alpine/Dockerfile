@@ -1,4 +1,4 @@
-FROM alpine:3.21.0@sha256:21dc6063fd678b478f57c0e13f47560d0ea4eeba26dfc947b2a4f81f686b9f45
+FROM alpine:3.21.0
 
 ARG CONTAINER_NAME
 ARG CONTAINER_VER
@@ -28,8 +28,8 @@ VOLUME [ "/config" ]
 
 USER apps
 
-COPY ./containers/base/alpine/entrypoint.sh /entrypoint.sh
-COPY ./containers/base/alpine/shim /etc/profile.d
+COPY ./entrypoint.sh /entrypoint.sh
+COPY ./shim /etc/profile.d
 
 ENTRYPOINT ["/bin/ash", "--"]
 

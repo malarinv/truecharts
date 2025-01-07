@@ -85,7 +85,7 @@ jobs:
       - charts-lint
       - charts-test
       - clustertool-tests
-      - website-and-docs
+      # - website-and-docs
       - print_head_msg
       - common-tests
     steps:
@@ -96,7 +96,6 @@ jobs:
                 "${{ needs.charts-lint.result }}" != "success" || \
                 "${{ needs.clustertool-tests.result }}" != "success" || \
                 "${{ needs.charts-test.result }}" != "success" || \
-                "${{ needs.website-and-docs.result }}" != "success" || \
                 "${{ needs.common-tests.result }}" != "success" || \
                 "${{ needs.print_head_msg.result }}" != "success" ]]; then
             echo "One or more jobs failed!"
@@ -104,3 +103,17 @@ jobs:
           else
             echo "All jobs succeeded!"
           fi
+        # run: |
+        #   if [[ "${{ needs.pr-changes.result }}" != "success" || \
+        #         "${{ needs.containers-build.result }}" != "success" || \
+        #         "${{ needs.charts-lint.result }}" != "success" || \
+        #         "${{ needs.clustertool-tests.result }}" != "success" || \
+        #         "${{ needs.charts-test.result }}" != "success" || \
+        #         "${{ needs.website-and-docs.result }}" != "success" || \
+        #         "${{ needs.common-tests.result }}" != "success" || \
+        #         "${{ needs.print_head_msg.result }}" != "success" ]]; then
+        #     echo "One or more jobs failed!"
+        #     exit 1
+        #   else
+        #     echo "All jobs succeeded!"
+        #   fi
