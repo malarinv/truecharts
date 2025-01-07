@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/manyfold3d/manyfold
-  tag: 0.86.0@sha256:3e891f3ff1da8ad7b1850c06f94a06b81d8a1581f967ce13b2b3c141217ffaaa
+  tag: 0.91.3@sha256:df60e0d8ca37528c5be47fb0983ae2cf9a50eba19118c61bd80c565f1bd83356
   pullPolicy: IfNotPresent
 
 securityContext:

@@ -1,12 +1,12 @@
 image:
   repository: ghcr.io/elfhosted/riven
   pullPolicy: IfNotPresent
-  tag: v0.16.2@sha256:b4093a18b4207ec278fa9ff0aa036622bb6cdc9b1874d42c778c54f329db30b7
+  tag: v0.20.1@sha256:229f1da453b23e9ef560ec2071e95d9d376eba17c5e76b80175ba46fe8d40096
 
 frontendImage:
   repository: ghcr.io/elfhosted/riven-frontend
   pullPolicy: IfNotPresent
-  tag: v0.16.3@sha256:4b52236ceec81cafe84b86655e54c1c855e94a674ae8e953e0207d31286d8ab5
+  tag: v0.17.0@sha256:f8543deadc70e6386662a7feeb833398269eb513bf91c229e0a47be7394f7bea
 
 service:
   main:

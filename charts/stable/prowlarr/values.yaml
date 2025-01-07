@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/onedr0p/prowlarr-develop
-  tag: 1.25.4.4818@sha256:5a936e5c73ebedfc45f1fa2541e84862a6c0df75b8f5148a082119fb65d55e2b
+  tag: 1.29.1.4903@sha256:aa0f5743b6b0a0d6e321dd55af0b78088199347e3cd1a7e5d635e4f4829adb6d
   pullPolicy: IfNotPresent
 exportarrImage:
   repository: ghcr.io/onedr0p/exportarr
@@ -39,7 +39,7 @@ workload:
             PROWLARR__AUTH__METHOD: ""
             # DisabledForLocalAddresses | Enabled
             PROWLARR__AUTH__REQUIRED: DisabledForLocalAddresses
-            # PROWLARR__APP__THEME: dark     
+            # PROWLARR__APP__THEME: dark
             # PROWLARR__APP__INSTANCENAME: Prowlarr
             # PROWLARR__LOG__LEVEL: info
             # PROWLARR__UPDATE__BRANCH: develop

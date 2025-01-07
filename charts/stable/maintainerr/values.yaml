@@ -1,7 +1,7 @@
 image:
   repository: docker.io/jorenn92/maintainerr
   pullPolicy: IfNotPresent
-  tag: 2.1.2@sha256:afca11e4a134211b8ff49047e43ed34f887f7f3bd176be0ec475e7d141589384
+  tag: 2.5.0@sha256:f476a937bc37b9291ee67d46266976f7623e18cbae5fdc9f6dc66e5fc8fc32c9
 
 securityContext:
   container:

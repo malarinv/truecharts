@@ -1,6 +1,6 @@
 image:
   repository: docker.io/victoriametrics/victoria-metrics
-  tag: v1.105.0@sha256:92497b12763df462897af62a492eee7a0e2e71b9d4769c24f1d5d645d00d4e94
+  tag: v1.108.1@sha256:f6e5322b315795ae2fec494c1d1c94b2e0325b789fead60ef3a13fccdefcd81e
   pullPolicy: IfNotPresent
 service:
   main:

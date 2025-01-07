@@ -2,7 +2,6 @@ package initfiles
 
 import (
     "bufio"
-    "encoding/json"
     "errors"
     "fmt"
     "io/ioutil"
@@ -14,23 +13,23 @@ import (
     "time"
 
     "github.com/rs/zerolog/log"
-    "gopkg.in/yaml.v2"
+    "gopkg.in/yaml.v3"
 
     age "filippo.io/age"
-    talhelperCfg "github.com/budimanjojo/talhelper/v3/pkg/config"
-    "github.com/invopop/jsonschema"
     "github.com/truecharts/public/clustertool/pkg/fluxhandler"
     "github.com/truecharts/public/clustertool/pkg/helper"
+    "github.com/truecharts/public/clustertool/pkg/talassist"
     corev1 "k8s.io/api/core/v1"
 )
 
 func InitFiles() error {
+    removeRunAgainFile()
     ageGen()
     genRootFiles()
     genBaseFiles()
     UpdateRootFiles()
     UpdateBaseFiles()
-    GenSchema()
+    talassist.GenSchema()
     GenPatches()
     genKubernetes()
     GenTalEnvConfigMap()
@@ -117,17 +116,22 @@ func FormatGitURL(input string) string {
     // Remove "https://" prefix if present
     input = strings.TrimPrefix(input, "https://")
 
+    if !strings.HasPrefix(input, "ssh://") {
+        input = "ssh://" + input
+    }
+
     // Ensure input starts with "ssh://git@"
     if !strings.HasPrefix(input, "ssh://git@") {
         // Prepend "ssh://git@" if neither "ssh://" nor "git@" is present
-        if !strings.HasPrefix(input, "ssh://") {
-            input = "ssh://" + input
-        }
         input = strings.Replace(input, "ssh://", "ssh://git@", 1)
     }
 
+    if strings.Contains(input, "git@git@") {
+        input = strings.Replace(input, "git@git@", "git@", 1)
+    }
+
     // Compile a regex to match and replace the URL pattern
-    re := regexp.MustCompile(`^ssh://git@([^:/]+)([:/])(\w+)/(\w+)\.git$`)
+    re := regexp.MustCompile(`^ssh://git@([^:/]+)([:/])([\w-]+)/([\w-]+)\.git$`)
     matches := re.FindStringSubmatch(input)
 
     if len(matches) == 5 {
@@ -141,15 +145,64 @@ func FormatGitURL(input string) string {
 }
 
 func genBaseFiles() error {
+    clusterEnvPresent := false
+
+    if _, err := os.Stat(helper.ClusterEnvFile); err == nil {
+        clusterEnvPresent = true
+        log.Debug().Msg("Detected existing cluster, continuing")
+    } else if os.IsNotExist(err) {
+        createRunAgainFile()
+        log.Warn().Msg("New cluster detected, creating clusterenv.yaml\n Please fill out ClusterEnv.yaml and run init again, after setting-up clusterenv.yaml!")
+    } else {
+        log.Fatal().Err(err).Msgf("Error checking clusterenv file: %s", err)
+        return err
+    }
+
     err := helper.CopyDir(helper.BaseCache, helper.ClusterPath+"", false)
     if err != nil {
-        log.Info().Msgf("Error: %v", err)
+        log.Error().Msgf("Error: %v", err)
     } else {
         log.Info().Msg("Base files copied successfully.")
     }
 
+    if !clusterEnvPresent {
+        os.Exit(0)
+    }
+
     log.Info().Msg("basefiles successfully altered.")
     return nil
+}
+
+// Create the "RUNAGAIN" file
+func createRunAgainFile() {
+    file, err := os.Create("RUNAGAIN")
+    if err != nil {
+        log.Err(err).Msg("error creating runagain file...")
+        return
+    }
+    defer file.Close()
+    return
+}
+
+// Remove the "RUNAGAIN" file if it exists
+func removeRunAgainFile() error {
+    if CheckRunAgainFileExists() {
+        err := os.Remove("RUNAGAIN")
+        if err != nil {
+            log.Err(err).Msg("error removing runagain file...")
+            return err
+        }
+        log.Debug().Msg("RUNAGAIN file removed.")
+    } else {
+        log.Debug().Msg("RUNAGAIN file does not exist.")
+    }
+    return nil
+}
+
+// Check if the "RUNAGAIN" file exists
+func CheckRunAgainFileExists() bool {
+    _, err := os.Stat("RUNAGAIN")
+    return !os.IsNotExist(err)
 }
 
 func UpdateBaseFiles() error {
@@ -466,21 +519,5 @@ func GenSopsSecret() error {
         return fmt.Errorf("failed to write secret YAML to file: %w", err)
     }
     log.Info().Msgf("SOPS secret YAML saved to: %s\n", secretPath)
-    return nil
-}
-
-func GenSchema() error {
-    cfg := talhelperCfg.TalhelperConfig{}
-    r := new(jsonschema.Reflector)
-    r.FieldNameTag = "yaml"
-    r.RequiredFromJSONSchemaTags = true
-    os.MkdirAll(helper.ClusterPath+"/talos", os.ModePerm)
-    var genschemaFile = path.Join(helper.ClusterPath, "/talos/talconfig.json")
-
-    schema := r.Reflect(&cfg)
-    data, _ := json.MarshalIndent(schema, "", "  ")
-    if err := os.WriteFile(genschemaFile, data, os.FileMode(0o644)); err != nil {
-        log.Fatal().Err(err).Msg("failed to write file to %s: %v")
-    }
     return nil
 }

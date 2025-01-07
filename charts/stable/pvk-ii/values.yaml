@@ -1,7 +1,7 @@
 image:
   pullPolicy: IfNotPresent
-  repository: docker.io/ich777/steamcmd
-  tag: pvkii@sha256:7793376795444a883ebb8d5abeb19fd51f4fd13cdcd74deebe034d55d767c2ac
+  repository: ghcr.io/ich777/steamcmd
+  tag: pvkii@sha256:22d30823848fc33bd937257181430c4bf263ee9c7edbf2704a7f044b6df918f5
 persistence:
   serverfiles:
     enabled: true

@@ -93,7 +93,7 @@ includeCommon: true
 namespace: ""
 
 image:
-  repository: docker.io/traefik/whoami
+  repository: ghcr.io/traefik/whoami
   pullPolicy: IfNotPresent
   tag: v1.10.3@sha256:43a68d10b9dfcfc3ffbfe4dd42100dc9aeaf29b3a5636c856337a5940f1b4f1c
 
@@ -234,6 +234,20 @@ credentials:
   #   secretKey: ""
   #   ## Is used in cases where things are encrypted by a backup utility
   #   encrKey: ""
+
+middlewares: {}
+#   basic-auth:
+#     type: basicAuth
+#     data:
+#       # middleware specific data ie
+#       users:
+#         - username: user1
+#           password: password1
+#   some-other-middleware:
+#     type: someOtherMiddleware
+#     data:
+#       # middleware specific data ie
+#       someOtherMiddlewareData: someOtherMiddlewareData
 
 # -- (docs/persistence/README.md)
 persistence:
@@ -460,7 +474,7 @@ APPURL: ""
 
 gluetunImage:
   repository: tccr.io/tccr/gluetun
-  tag: v3.39.0@sha256:043522d3c797668666cffe6c53aa1a4bb8532ca08e71a9a862c414893a28c1cb
+  tag: v3.40.0@sha256:f5d434869d03fe3c91f832915ecabf7cb65c330732c5ba39ac03feb5e917f552
   pullPolicy: IfNotPresent
 
 netshootImage:
@@ -470,17 +484,17 @@ netshootImage:
 
 tailscaleImage:
   repository: tccr.io/tccr/tailscale
-  tag: v1.76.1@sha256:a722931132a225244fe0387f3f4bec535b2d98b3af4f628f1dc4529b0136fca7
+  tag: v1.78.3@sha256:2d2714b75c7e14a0a9b9e69cebec9815282158d65790276ef783c4ac5e424446
   pullPolicy: IfNotPresent
 
 codeserverImage:
   repository: tccr.io/tccr/code-server
-  tag: v4.93.1@sha256:0f6d7b4617569b4c2a2af19a8daa35374adcde46532d9d31eff7e0853b9fd603
+  tag: v4.96.2@sha256:24675f246cb1644bda3b70abb47b7151839d03033bcdc8140c0d4438a9aab99c
   pullPolicy: IfNotPresent
 
 alpineImage:
   repository: tccr.io/tccr/alpine
-  tag: v3.20.3@sha256:0f0162635afb50d4794d7fd92b74c635ae3422cc426284da88e5e8754d1cfdcd
+  tag: v3.20.3@sha256:1e8d4e2c057280ff8e4139757ff2a5d77a0f7271a3be3b8244a19a2697840e01
   pullPolicy: IfNotPresent
 
 scratchImage:
@@ -501,11 +515,11 @@ wgetImage:
 yqImage:
   pullPolicy: IfNotPresent
   repository: docker.io/mikefarah/yq
-  tag: 4.44.3@sha256:5b3d851bf28b04ef902fee86305f4dd7e063919c1cafedab2042adb16221c025
+  tag: 4.44.6@sha256:b1d117c609ba990436ad1649299e2f6c378f62cb562caf30b6f2fb6144713422
 
 postgresClientImage:
   repository: tccr.io/tccr/db-wait-postgres
-  tag: v1.1.0@sha256:eb330c9d63de46eac5c0acf58fd1fd79190d92505f8957b66ba150b24244774e
+  tag: v1.1.0@sha256:5e95119261f8184663b618bf53db254fad31a369d74169155406d0472cb7680c
   pullPolicy: IfNotPresent
 
 mariadbClientImage:
@@ -515,7 +529,7 @@ mariadbClientImage:
 
 redisClientImage:
   repository: tccr.io/tccr/db-wait-redis
-  tag: v1.1.0@sha256:8fe7439963ea5fece9bac13c18eb196ca70434a1d87630f5e04360ffa21e2851
+  tag: v1.1.0@sha256:11cbaee0ce92bc243071f31f4fb8bc30c2735ee34ead52cd842713c77bdf8739
   pullPolicy: IfNotPresent
 
 mongodbClientImage:
@@ -525,7 +539,7 @@ mongodbClientImage:
 
 postgres15Image:
   repository: ghcr.io/cloudnative-pg/postgresql
-  tag: "15.8"
+  tag: "15.10"
   pullPolicy: IfNotPresent
 
 postgres16Image:

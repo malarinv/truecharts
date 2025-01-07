@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/linuxserver/remmina
   pullPolicy: IfNotPresent
-  tag: 1.4.35@sha256:2a500d1db633146733f55ab5d83eb08e600f2b2c718fdaa9cd314a7295f85799
+  tag: 1.4.35@sha256:afb8a46e8c09406a94beb259921879d2af0f458035812649fc2da4d654114ba6
 service:
   main:
     ports:

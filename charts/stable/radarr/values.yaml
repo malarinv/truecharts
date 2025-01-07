@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/onedr0p/radarr
   pullPolicy: IfNotPresent
-  tag: 5.14.0.9383@sha256:e4ead782fd1d4842765e0ef96bb863fc2fef72ee3e87e2b2a51dc33fb3ebc32c
+  tag: 5.16.3.9541@sha256:c486358da837234118d4d3bedb88269e6ad55919efc31aa84cb478780d59b93a
 exportarrImage:
   repository: ghcr.io/onedr0p/exportarr
   pullPolicy: IfNotPresent
@@ -45,7 +45,7 @@ workload:
             RADARR__AUTH__METHOD: ""
             # DisabledForLocalAddresses | Enabled
             RADARR__AUTH__REQUIRED: DisabledForLocalAddresses
-            # RADARR__APP__THEME: dark     
+            # RADARR__APP__THEME: dark
             # RADARR__APP__INSTANCENAME: Radarr
             # RADARR__LOG__LEVEL: info
             # RADARR__UPDATE__BRANCH: develop

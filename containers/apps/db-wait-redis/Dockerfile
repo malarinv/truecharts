@@ -1,5 +1,5 @@
 # hadolint ignore=DL3007
-FROM tccr.io/tccr/alpine:latest@sha256:0f0162635afb50d4794d7fd92b74c635ae3422cc426284da88e5e8754d1cfdcd
+FROM ghcr.io/malarinv/truecharts-alpine:latest
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -27,7 +27,7 @@ apk update && \
 
 USER apps
 
-COPY ./containers/apps/db-wait-redis/entrypoint.sh /entrypoint.sh
+COPY ./entrypoint.sh /entrypoint.sh
 CMD ["/entrypoint.sh"]
 
 LABEL "maintainer"="TrueCharts <info@truecharts.org>"

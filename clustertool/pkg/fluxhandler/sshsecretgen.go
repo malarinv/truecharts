@@ -16,8 +16,8 @@ import (
 
     "github.com/truecharts/public/clustertool/pkg/helper"
     "golang.org/x/crypto/ssh"
+    "gopkg.in/yaml.v3"
     corev1 "k8s.io/api/core/v1"
-    "sigs.k8s.io/yaml"
 )
 
 // Define a struct to map the YAML content
@@ -176,7 +176,7 @@ func publicKeyToOpenSSH(pub *ecdsa.PublicKey) (string, error) {
 
 // getKnownHostsEntry generates the known_hosts entry for the given URL
 func getKnownHostsEntry(url string) string {
-    if url == "github.com" {
+    if strings.Contains(url, "github.com") {
         return getGithubKnownHostsEntry()
     }
     return generateKnownHostsEntry(url)

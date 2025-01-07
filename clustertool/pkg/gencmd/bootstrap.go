@@ -2,21 +2,17 @@ package gencmd
 
 import (
     "context"
-    "io"
     "os"
     "path/filepath"
-    "strings"
 
     "github.com/rs/zerolog/log"
 
-    talhelperCfg "github.com/budimanjojo/talhelper/v3/pkg/config"
-    "github.com/budimanjojo/talhelper/v3/pkg/generate"
-    "github.com/truecharts/public/clustertool/embed"
     "github.com/truecharts/public/clustertool/pkg/fluxhandler"
     "github.com/truecharts/public/clustertool/pkg/helper"
     "github.com/truecharts/public/clustertool/pkg/kubectlcmds"
     "github.com/truecharts/public/clustertool/pkg/nodestatus"
     "github.com/truecharts/public/clustertool/pkg/sops"
+    "github.com/truecharts/public/clustertool/pkg/talassist"
 )
 
 var HelmRepos map[string]*fluxhandler.HelmRepo
@@ -27,48 +23,22 @@ var manifestPaths = []string{
     filepath.Join(helper.KubernetesPath, "flux-system", "flux", "clustersettings.secret.yaml"),
 }
 
-func GenBootstrap(node string, extraFlags []string) string {
-    cfg, err := talhelperCfg.LoadAndValidateFromFile(helper.TalConfigFile, []string{helper.ClusterEnvFile}, false)
-    if err != nil {
-        log.Fatal().Err(err).Msg("failed to parse talconfig or talenv file: %s")
-    }
-
-    applyStdout := os.Stdout
-    r, w, _ := os.Pipe()
-    os.Stdout = w
-
-    err = generate.GenerateBootstrapCommand(cfg, helper.TalosGenerated, node, extraFlags)
-
-    w.Close()
-    out, _ := io.ReadAll(r)
-    os.Stdout = applyStdout
-
-    talosPath := embed.GetTalosExec()
-    strout := strings.ReplaceAll(string(out), "talosctl", talosPath)
-    strout = strings.ReplaceAll(strout, "\n", "")
-    strout = strings.ReplaceAll(strout, ";", "")
-
-    if err != nil {
-        log.Fatal().Err(err).Msg("failed to generate talosctl bootstrap command: %s")
-    }
-    return strout
-}
-
 func RunBootstrap(args []string) {
     var extraArgs []string
     if len(args) > 1 {
         extraArgs = args[1:]
     }
+
     if err := sops.DecryptFiles(); err != nil {
         log.Info().Msgf("Error decrypting files: %v\n", err)
     }
 
-    bootstrapcmds := GenBootstrap("", extraArgs)
-    bootstrapNode := helper.ExtractNode(bootstrapcmds)
+    bootstrapNode := talassist.TalConfig.Nodes[0].IPAddress
 
     nodestatus.WaitForHealth(bootstrapNode, []string{"maintenance"})
 
     taloscmds := GenApply(bootstrapNode, extraArgs)
+
     ExecCmds(taloscmds, false)
 
     nodestatus.WaitForHealth(bootstrapNode, []string{"booting"})
@@ -76,15 +46,18 @@ func RunBootstrap(args []string) {
     log.Info().Msgf("Bootstrap: At this point your system is installed to disk, please make sure not to reboot into the installer ISO/USB  %s", bootstrapNode)
 
     log.Info().Msgf("Bootstrap: running bootstrap on node:  %s", bootstrapNode)
-    ExecCmd(bootstrapcmds)
+    bootstrapcmds := GenPlain("bootstrap", bootstrapNode, extraArgs)
+
+    ExecCmd(bootstrapcmds[0])
 
     log.Info().Msgf("Bootstrap: waiting for VIP %v to come online...", helper.TalEnv["VIP_IP"])
     nodestatus.WaitForHealth(helper.TalEnv["VIP_IP"], []string{"running"})
 
-    log.Info().Msgf("Bootstrap: Configuring kubectl for VIP: %v", helper.TalEnv["VIP_IP"])
+    log.Info().Msgf("Bootstrap: Configuring kubeconfig/kubectl for VIP: %v", helper.TalEnv["VIP_IP"])
     // Ensure kubeconfig is loaded
-    kubeconfigcmds := GenKubeConfig(helper.TalEnv["VIP_IP"])
-    ExecCmd(kubeconfigcmds)
+
+    kubeconfigcmds := GenPlain("kubeconfig", helper.TalEnv["VIP_IP"], []string{"-f"})
+    ExecCmd(kubeconfigcmds[0])
 
     // Desired pod names
     requiredPods := []string{
@@ -174,24 +147,25 @@ func RunBootstrap(args []string) {
 
     log.Info().Msg("Bootstrap: Base Cluster Configuration Completed, continuing setup...")
     log.Info().Msg("Bootstrap: Confirming cluster health...")
-    healthcmd := GenHealth(helper.TalEnv["VIP_IP"])
-    ExecCmd(healthcmd)
+    healthcmd := GenPlain("health", helper.TalEnv["VIP_IP"], []string{})
+    ExecCmd(healthcmd[0])
     close(stopCh)
 
     prioCharts := []fluxhandler.HelmChart{
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/spegel/app"), false, true},
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/cert-manager/app"), false, false},
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/kyverno/app"), false, false},
+        {filepath.Join(helper.ClusterPath, "/kubernetes/system/kubernetes-reflector/app"), false, false},
     }
     fluxhandler.InstallCharts(prioCharts, HelmRepos, false)
 
     intermediateCharts := []fluxhandler.HelmChart{
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/metallb/app"), false, false},
+        {filepath.Join(helper.ClusterPath, "/kubernetes/core/clusterissuer/app"), false, false},
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/cloudnative-pg/app"), false, false},
         {filepath.Join(helper.ClusterPath, "/kubernetes/kube-system/node-feature-discovery/app"), false, false},
         {filepath.Join(helper.ClusterPath, "/kubernetes/kube-system/metrics-server/app"), false, false},
         {filepath.Join(helper.ClusterPath, "/kubernetes/kube-system/descheduler/app"), false, false},
-        {filepath.Join(helper.ClusterPath, "/kubernetes/system/kubernetes-reflector/app"), false, false},
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/volsync/app"), false, true},
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/snapshot-controller/app"), false, true},
         {filepath.Join(helper.ClusterPath, "/kubernetes/system/openebs/app"), false, true},
@@ -231,6 +205,8 @@ func RunBootstrap(args []string) {
 
     log.Info().Msg("Bootstrap: Installing included applications")
     postCharts := []fluxhandler.HelmChart{
+        {filepath.Join(helper.ClusterPath, "/kubernetes/core/traefik/app"), false, true},
+        {filepath.Join(helper.ClusterPath, "/kubernetes/core/blocky/app"), false, true},
         {filepath.Join(helper.ClusterPath, "/kubernetes/apps/kubernetes-dashboard/app"), false, true},
     }
 

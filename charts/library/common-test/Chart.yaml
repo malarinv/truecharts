@@ -7,7 +7,7 @@ apiVersion: v2
 appVersion: unknown
 dependencies:
   - name: common
-    version: ~25.1.0
+    version: ~25.4.0
     repository: file://../common/
     condition: ""
     alias: ""
@@ -22,7 +22,7 @@ keywords:
   - truecharts
   - common
   - test
-kubeVersion: ">=1.24.0-0"
+kubeVersion: '>=1.24.0-0'
 maintainers:
   - name: TrueCharts
     email: info@truecharts.org

@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/techno-tim/littlelink-server
   pullPolicy: IfNotPresent
-  tag: latest@sha256:d73ac74bb3317d13b76c5f62a45ccc0a1eaa6c9ca8819ec417762fecac9052a5
+  tag: latest@sha256:f953db398533c453745e1db670680e1cbf7e36072eaec0d938fef81334a72553
 service:
   main:
     ports:

@@ -1,7 +1,7 @@
-FROM traefik:v3.2.0@sha256:66e37237b371f2b25ce5f247cc371976929dcb18c041e05685f1de1df6422b72
+FROM traefik:v3.2.3@sha256:efb87236c8c92599bcd3a67a7a8a55e0f255665f4719722bf398935aa9b92270
 # Above line used by CI to find tags etc
 
-FROM alpine:3.20.3@sha256:beefdbd8a1da6d2915566fde36db9db0b524eb737fc57cd1367effd16dc0d06d as plugins
+FROM alpine:3.21.0@sha256:21dc6063fd678b478f57c0e13f47560d0ea4eeba26dfc947b2a4f81f686b9f45 AS plugins
 
 # FIXME: Find a way to keep versions up to date
 # -- Use the following prefixes to specify plugins to clone
@@ -10,7 +10,7 @@ FROM alpine:3.20.3@sha256:beefdbd8a1da6d2915566fde36db9db0b524eb737fc57cd1367eff
 
 # Theme Park
 ARG TC_PLUGIN_REPO_THEME_PARK=github.com/packruler/traefik-themepark
-ARG TC_PLUGIN_VERSION_THEME_PARK_VERSION=v1.4.0
+ARG TC_PLUGIN_VERSION_THEME_PARK_VERSION=v1.4.2
 # GeoBlock
 ARG TC_PLUGIN_REPO_GEOBLOCK=github.com/PascalMinder/geoblock
 ARG TC_PLUGIN_VERSION_GEOBLOCK_VERSION=v0.2.8
@@ -22,7 +22,7 @@ ARG TC_PLUGIN_REPO_MODSECURITY=github.com/acouvreur/traefik-modsecurity-plugin
 ARG TC_PLUGIN_VERSION_MODSECURITY_VERSION=v1.3.0
 # Crowdsec
 ARG TC_PLUGIN_REPO_CROWDSEC_BOUNCER=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-ARG TC_PLUGIN_VERSION_CROWDSEC_BOUNCER_VERSION=v1.3.0
+ARG TC_PLUGIN_VERSION_CROWDSEC_BOUNCER_VERSION=v1.3.5
 # RewriteResponseHeaders
 ARG TC_PLUGIN_REPO_REWRITERESPONSEHEADERS=github.com/XciD/traefik-plugin-rewrite-headers
 ARG TC_PLUGIN_VERSION_REWRITERESPONSEHEADERS_VERSION=v0.0.4
@@ -32,10 +32,10 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # hadolint ignore=DL3018
 RUN apk add --no-cache --update git
 
-COPY --chmod=777 ./containers/apps/traefik/clone-plugins.sh /clone-plugins.sh
+COPY --chmod=777 ./clone-plugins.sh /clone-plugins.sh
 RUN /clone-plugins.sh
 
-FROM traefik:v3.2.0@sha256:66e37237b371f2b25ce5f247cc371976929dcb18c041e05685f1de1df6422b72
+FROM traefik:v3.2.3@sha256:efb87236c8c92599bcd3a67a7a8a55e0f255665f4719722bf398935aa9b92270
 # Copy the plugins from the previous stage
 COPY --from=plugins /plugins-local /plugins-local
 

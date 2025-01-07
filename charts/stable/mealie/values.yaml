@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/mealie-recipes/mealie
-  tag: v2.1.0@sha256:530dc14de032a8b0e25507dd7595df6fd58c20639f872482729a9054d7b2cd60
+  tag: v2.4.1@sha256:efd4001597fbcea58aa1e2ff54f5e5b5f8fe6237df6862a2e4576dcb5ff0d24e
   pullPolicy: IfNotPresent
 mealie:
   frontend:
@@ -115,3 +115,10 @@ cnpg:
 portal:
   open:
     enabled: true
+
+ingress:
+  main:
+    integrations:
+      homepage:
+        widget:
+          version: 2
